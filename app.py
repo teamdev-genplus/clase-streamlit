@@ -25,7 +25,7 @@ DIAS_MESES = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
 # -------------------- SIDEBAR --------------------
 with st.sidebar:
-    st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/React-icon.svg/512px-React-icon.svg.png", width=120)
+    st.image("docs/aecode.jpg", width=120)
     st.markdown("## AECODE")
 
     st.markdown("### Cargar archivos")
