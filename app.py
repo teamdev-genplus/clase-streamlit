@@ -9,11 +9,16 @@ st.set_page_config(page_title="Balance Hídrico", layout="wide")
 # Variables de sesión para manejar archivos
 if 'archivos' not in st.session_state:
     st.session_state.archivos = [
-        {"nombre": "Buena Vista", "ruta": "docs/ACU_1DIA_BUENA_VISTA.xlsx"},
-        {"nombre": "Pira", "ruta": "docs/ACU-1DIA-PIRA.xlsx"},
-        {"nombre": "Cajamarquilla", "ruta": "docs/ACU-12HORAS-CAJAMARQUILLA.xlsx"},
-        {"nombre": "Pariacoto", "ruta": "docs/ACU-12HORAS-PARIACOTO.xlsx"},
+        # {"nombre": "Buena Vista", "ruta": "docs/ACU_1DIA_BUENA_VISTA.xlsx"},
+        # {"nombre": "Pira", "ruta": "docs/ACU-1DIA-PIRA.xlsx"},
+        # {"nombre": "Cajamarquilla", "ruta": "docs/ACU-12HORAS-CAJAMARQUILLA.xlsx"},
+        # {"nombre": "Pariacoto", "ruta": "docs/ACU-12HORAS-PARIACOTO.xlsx"},
     ]
+
+# Inicializar archivos temporales para nombres
+if 'temp_archivos_subidos' not in st.session_state:
+    st.session_state.temp_archivos_subidos = []
+
 
 # Días por mes para los cálculos
 DIAS_MESES = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
@@ -26,20 +31,30 @@ with st.sidebar:
     st.markdown("### Cargar archivos")
     nuevos_archivos = st.file_uploader("Selecciona archivos (máx. 5) .xlsx", accept_multiple_files=True, type=["xlsx"])
 
+    # Si hay nuevos archivos, agregarlos a temporales si no están ya
     if nuevos_archivos:
-        if len(st.session_state.archivos) + len(nuevos_archivos) <= 5:
-            for archivo in nuevos_archivos:
-                nombre_estacion = st.text_input(f"Nombre para {archivo.name}", key=archivo.name)
-                if nombre_estacion:
-                    st.session_state.archivos.append({'nombre': nombre_estacion, 'ruta': archivo})
-        else:
-            st.error("Límite de 5 archivos excedido.")
+        for archivo in nuevos_archivos:
+            if not any(a['ruta'].name == archivo.name for a in st.session_state.temp_archivos_subidos):
+                st.session_state.temp_archivos_subidos.append({"ruta": archivo, "nombre": ""})
 
-    if st.session_state.archivos:
-        st.markdown("**Archivos cargados:**")
-        for entry in st.session_state.archivos:
-            nombre_archivo = entry['ruta'].name if hasattr(entry['ruta'], 'name') else entry['ruta']
-            st.markdown(f"- **{entry['nombre']}** → {nombre_archivo}")
+    # Mostrar campos para ingresar nombre de estación
+    todos_con_nombre = True
+    for idx, archivo in enumerate(st.session_state.temp_archivos_subidos):
+        nombre = st.text_input(f"Nombre para {archivo['ruta'].name}", value=archivo['nombre'], key=f"nombre_{archivo['ruta'].name}")
+        st.session_state.temp_archivos_subidos[idx]['nombre'] = nombre.strip()
+        if nombre.strip() == "":
+            todos_con_nombre = False
+
+    # Si todos los archivos tienen nombre, habilitar botón para confirmar subida
+    if st.session_state.temp_archivos_subidos and todos_con_nombre:
+        if st.button("Confirmar carga de archivos"):
+            if len(st.session_state.archivos) + len(st.session_state.temp_archivos_subidos) <= 5:
+                st.session_state.archivos.extend(st.session_state.temp_archivos_subidos)
+                st.session_state.temp_archivos_subidos = []
+                st.success("Archivos cargados correctamente.")
+            else:
+                st.error("Límite de 5 archivos excedido.")
+
 
     st.markdown("### Rango de fechas")
     st.markdown("📅")
